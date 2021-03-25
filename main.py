@@ -68,7 +68,21 @@ class PacmanGame(GameApp):
 
         self.command_map = {
             'W': self.get_pacman_next_direction_function(self.pacman1, DIR_UP),
+            'A': self.get_pacman_next_direction_function(self.pacman1, DIR_LEFT),
+            'S': self.get_pacman_next_direction_function(self.pacman1, DIR_DOWN),
+            'D': self.get_pacman_next_direction_function(self.pacman1, DIR_RIGHT),
+            'I': self.get_pacman_next_direction_function(self.pacman2, DIR_UP),
+            'J': self.get_pacman_next_direction_function(self.pacman2, DIR_LEFT),
+            'K': self.get_pacman_next_direction_function(self.pacman2, DIR_DOWN),
+            'L': self.get_pacman_next_direction_function(self.pacman2, DIR_RIGHT),
         }
+    
+    def get_pacman_next_direction_function(self, pacman, next_direction):
+
+        def f():
+            pacman.set_next_direction(next_direction)
+
+        return f
 
     def pre_update(self):
         pass
@@ -90,24 +104,8 @@ class PacmanGame(GameApp):
 
     def on_key_pressed(self, event):
         ch = event.char.upper()
-
-        if event.char.upper() == 'A':
-            self.pacman1.set_next_direction(DIR_LEFT)
-        elif event.char.upper() == 'W':
-            self.pacman1.set_next_direction(DIR_UP)
-        elif event.char.upper() == 'S':
-            self.pacman1.set_next_direction(DIR_DOWN)
-        elif event.char.upper() == 'D':
-            self.pacman1.set_next_direction(DIR_RIGHT)
-
-        if event.char.upper() == 'J':
-            self.pacman2.set_next_direction(DIR_LEFT)
-        elif event.char.upper() == 'I':
-            self.pacman2.set_next_direction(DIR_UP)
-        elif event.char.upper() == 'K':
-            self.pacman2.set_next_direction(DIR_DOWN)
-        elif event.char.upper() == 'L':
-            self.pacman2.set_next_direction(DIR_RIGHT)
+        if ch in self.command_map.keys():
+            self.command_map[ch]()
 
 if __name__ == "__main__":
     root = tk.Tk()
