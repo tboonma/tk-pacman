@@ -66,6 +66,10 @@ class PacmanGame(GameApp):
         self.pacman1.dot_eaten_observers.append(self.dot_eaten_by_pacman1)
         self.pacman2.dot_eaten_observers.append(self.dot_eaten_by_pacman2)
 
+        self.command_map = {
+            'W': self.get_pacman_next_direction_function(self.pacman1, DIR_UP),
+        }
+
     def pre_update(self):
         pass
 
@@ -85,6 +89,8 @@ class PacmanGame(GameApp):
         self.update_scores()
 
     def on_key_pressed(self, event):
+        ch = event.char.upper()
+
         if event.char.upper() == 'A':
             self.pacman1.set_next_direction(DIR_LEFT)
         elif event.char.upper() == 'W':
