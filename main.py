@@ -14,7 +14,7 @@ UPDATE_DELAY = 33
 PACMAN_SPEED = 5
 
 class Pacman(Sprite):
-    def __init__(self, app, maze, r, c):
+    def __init__(self, app, maze, r, c, photo_image=None):
         self.r = r
         self.c = c
         self.maze = maze
@@ -29,7 +29,7 @@ class Pacman(Sprite):
         self.state = NormalPacmanState(self)
 
         x, y = maze.piece_center(r,c)
-        super().__init__(app, 'images/pacman.png', x, y)
+        super().__init__(app, 'images/pacman.png', x, y, photo_image)
 
     def update(self):
         if self.maze.is_at_center(self.x, self.y):
@@ -74,8 +74,11 @@ class PacmanGame(GameApp):
     def init_game(self):
         self.maze = Maze(self, CANVAS_WIDTH, CANVAS_HEIGHT)
 
-        self.pacman1 = Pacman(self, self.maze, 1, 1)
-        self.pacman2 = Pacman(self, self.maze, self.maze.get_height() - 2, self.maze.get_width() - 2)
+        self.pacman1_image = tk.PhotoImage(file='images/pacman1.png')
+        self.pacman2_image = tk.PhotoImage(file='images/pacman2.png')
+
+        self.pacman1 = Pacman(self, self.maze, 1, 1, self.pacman1_image)
+        self.pacman2 = Pacman(self, self.maze, self.maze.get_height() - 2, self.maze.get_width() - 2, self.pacman2_image)
 
         self.pacman1_score_text = Text(self, 'P1: 0', 100, 20)
         self.pacman2_score_text = Text(self, 'P2: 0', 600, 20)
