@@ -12,7 +12,15 @@ class Dot(Sprite):
         self.is_eaten = True
         self.hide()
 
+class SuperDot(Sprite):
+    def __init__(self, app, x, y, photo_image=None):
+        super().__init__(app, '', x, y, photo_image=photo_image)
+        self.is_eaten = False
 
+    def super_get_eaten(self):
+        self.is_eaten = True
+        self.hide()
+        
 class Wall(Sprite):
     def __init__(self, app, x, y, photo_image=None):
         super().__init__(app, 'images/wall.png', x, y, photo_image=photo_image)
