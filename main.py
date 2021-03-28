@@ -143,7 +143,7 @@ class PacmanGame(GameApp):
         self.pacman2_score_text = Text(self, 'P2: 0', 600, 20)
 
         self.elements.append(self.pacman1)
-        self.elements.append(self.pacman2)
+        # self.elements.append(self.pacman2)
 
         self.elements.append(self.ghost1)
         self.elements.append(self.ghost2)
@@ -180,15 +180,7 @@ class PacmanGame(GameApp):
     def post_update(self):
         if self.any_collision():
             messagebox.showinfo("Alert", "Game Over!")
-            for i in self.elements:
-                i.hide()
-            for i in self.maze.dots:
-                self.maze.dots[i].hide()
-            self.maze.dots.clear()
-            self.elements.clear()
-            self.pacman1_score_text.hide()
-            self.pacman2_score_text.hide()
-            self.init_game()
+            self.new_game()
             
         for ghost in self.elements:
             if not ghost.is_ghost:
@@ -196,6 +188,10 @@ class PacmanGame(GameApp):
             if not self.game_started:
                 continue
             self.move_ghost(ghost, ghost.movable_ways())
+        
+        if True not in self.maze.has_active_dots.values():
+            messagebox.showinfo("Alert", "Game Cleared!")
+            self.new_game()
 
     def update_scores(self):
         self.pacman1_score_text.set_text(f'P1: {self.pacman1_score}')
@@ -217,14 +213,31 @@ class PacmanGame(GameApp):
 
     def move_ghost(self, ghost, ways):
         move = random.choice(ways)
-        if ghost.direction == DIR_DOWN and move == DIR_UP and DIR_DOWN in ways:
+        up_down_DIR = [DIR_UP, DIR_DOWN]
+        left_right_DIR = [DIR_LEFT, DIR_RIGHT]
+        if ghost.direction == DIR_DOWN and move == DIR_UP and ways == [DIR_DOWN, DIR_UP]:
             move = random.choice(ways+[DIR_DOWN]*20)
-        elif ghost.direction == DIR_UP and move == DIR_DOWN and DIR_UP in ways:
+        elif ghost.direction == DIR_UP and move == DIR_DOWN and ways == [DIR_DOWN, DIR_UP]:
             move = random.choice(ways+[DIR_UP]*20)
-        elif ghost.direction == DIR_LEFT and move == DIR_RIGHT and DIR_LEFT in ways:
+        elif ghost.direction == DIR_LEFT and move == DIR_RIGHT and ways == [DIR_LEFT, DIR_RIGHT]:
             move = random.choice(ways+[DIR_LEFT]*20)
-        elif ghost.direction == DIR_RIGHT and move == DIR_LEFT and DIR_RIGHT in ways:
+        elif ghost.direction == DIR_RIGHT and move == DIR_LEFT and ways == [DIR_LEFT, DIR_RIGHT]:
             move = random.choice(ways+[DIR_RIGHT]*20)
+        if len(ways) == 3:
+            up_down_DIR.extend(ways)
+            left_right_DIR.extend(ways)
+            if set(up_down_DIR) == 3:
+                temp = list(up_down_DIR)
+                temp.remove(DIR_UP)
+                temp.remove(DIR_DOWN)
+                last_dir = temp[0]
+                move = random.choice(ways+[last_dir]*20)
+            elif set(left_right_DIR) == 3:
+                temp = list(left_right_DIR)
+                temp.remove(DIR_LEFT)
+                temp.remove(DIR_RIGHT)
+                last_dir = temp[0]
+                move = random.choice(ways+[last_dir]*10)
         ghost.set_next_direction(move)
     
     def any_collision(self):
@@ -237,6 +250,17 @@ class PacmanGame(GameApp):
                 if player.x >= ghost.x-20 and player.x <= ghost.x+20 and player.y >= ghost.y-20 and player.y <= ghost.y+20:
                     return player
         return False
+    
+    def new_game(self):
+        for i in self.elements:
+            i.hide()
+        for i in self.maze.dots:
+            self.maze.dots[i].hide()
+        self.maze.dots.clear()
+        self.elements.clear()
+        self.pacman1_score_text.hide()
+        self.pacman2_score_text.hide()
+        self.init_game()
 
 
 class NormalPacmanState:
