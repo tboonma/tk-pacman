@@ -143,7 +143,7 @@ class PacmanGame(GameApp):
         self.pacman2_score_text = Text(self, 'P2: 0', 600, 20)
 
         self.elements.append(self.pacman1)
-        # self.elements.append(self.pacman2)
+        self.elements.append(self.pacman2)
 
         self.elements.append(self.ghost1)
         self.elements.append(self.ghost2)
