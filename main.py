@@ -1,5 +1,6 @@
 import tkinter as tk
 import random
+from tkinter import messagebox
 
 from gamelib import Sprite, GameApp, Text
 
@@ -15,10 +16,10 @@ PACMAN_SPEED = 5
 
 class Pacman(Sprite):
     def __init__(self, app, maze, r, c, photo_image=None):
+        self.is_ghost = False
         self.r = r
         self.c = c
         self.maze = maze
-
         self.dot_eaten_observers = []
 
         self.direction = DIR_STILL
@@ -70,21 +71,84 @@ class Pacman(Sprite):
         self.next_direction = direction
 
 
+class Ghost(Sprite):
+    def __init__(self, app, maze, r, c, photo_image=None):
+        self.is_ghost = True
+        self.r = r
+        self.c = c
+        self.maze = maze
+
+        self.dot_eaten_observers = []
+
+        self.direction = DIR_STILL
+        self.next_direction = DIR_STILL
+
+        self.state = NormalPacmanState(self)
+
+        x, y = maze.piece_center(r,c)
+        super().__init__(app, 'images/pacman.png', x, y, photo_image)
+    
+    def update(self):
+        if self.maze.is_at_center(self.x, self.y):
+            r, c = self.maze.xy_to_rc(self.x, self.y)
+        
+            if self.maze.is_movable_direction(r, c, self.next_direction):
+                self.direction = self.next_direction
+            else:
+                self.direction = DIR_STILL
+        
+        self.state.move_pacman()
+    
+    def movable_ways(self):
+        turn = []
+        if not self.maze.has_wall_at(self.r+1, self.c):
+            turn.append(DIR_DOWN)
+        if not self.maze.has_wall_at(self.r-1, self.c):
+            turn.append(DIR_UP)
+        if not self.maze.has_wall_at(self.r, self.c+1):
+            turn.append(DIR_RIGHT)
+        if not self.maze.has_wall_at(self.r, self.c-1):
+            turn.append(DIR_LEFT)
+        if len(turn) > 0:
+            return turn
+        else:
+            return False
+    
+    def set_next_direction(self, direction):
+        self.next_direction = direction
+
+
 class PacmanGame(GameApp):
     def init_game(self):
+        self.game_started = False
         self.maze = Maze(self, CANVAS_WIDTH, CANVAS_HEIGHT)
 
         self.pacman1_image = tk.PhotoImage(file='images/pacman1.png')
         self.pacman2_image = tk.PhotoImage(file='images/pacman2.png')
 
+        self.ghost1_image = tk.PhotoImage(file='images/ghost1.png')
+        self.ghost2_image = tk.PhotoImage(file='images/ghost2.png')
+        self.ghost3_image = tk.PhotoImage(file='images/ghost3.png')
+        self.ghost4_image = tk.PhotoImage(file='images/ghost4.png')
+
         self.pacman1 = Pacman(self, self.maze, 1, 1, self.pacman1_image)
         self.pacman2 = Pacman(self, self.maze, self.maze.get_height() - 2, self.maze.get_width() - 2, self.pacman2_image)
+
+        self.ghost1 = Ghost(self, self.maze, (self.maze.get_height() - 2)//2, (self.maze.get_width() - 2)//2, self.ghost1_image)
+        self.ghost2 = Ghost(self, self.maze, (self.maze.get_height() - 2)//2, self.maze.get_width() - 10, self.ghost2_image)
+        self.ghost3 = Ghost(self, self.maze, (self.maze.get_height() - 2)//2 + 1, (self.maze.get_width() - 2)//2, self.ghost3_image)
+        self.ghost4 = Ghost(self, self.maze, (self.maze.get_height() - 2)//2 + 1, self.maze.get_width() - 10, self.ghost4_image)
 
         self.pacman1_score_text = Text(self, 'P1: 0', 100, 20)
         self.pacman2_score_text = Text(self, 'P2: 0', 600, 20)
 
         self.elements.append(self.pacman1)
         self.elements.append(self.pacman2)
+
+        self.elements.append(self.ghost1)
+        self.elements.append(self.ghost2)
+        self.elements.append(self.ghost3)
+        self.elements.append(self.ghost4)
 
         self.pacman1_score = 0
         self.pacman2_score = 0
@@ -114,7 +178,24 @@ class PacmanGame(GameApp):
         pass
 
     def post_update(self):
-        pass
+        if self.any_collision():
+            messagebox.showinfo("Alert", "Game Over!")
+            for i in self.elements:
+                i.hide()
+            for i in self.maze.dots:
+                self.maze.dots[i].hide()
+            self.maze.dots.clear()
+            self.elements.clear()
+            self.pacman1_score_text.hide()
+            self.pacman2_score_text.hide()
+            self.init_game()
+            
+        for ghost in self.elements:
+            if not ghost.is_ghost:
+                continue
+            if not self.game_started:
+                continue
+            self.move_ghost(ghost, ghost.movable_ways())
 
     def update_scores(self):
         self.pacman1_score_text.set_text(f'P1: {self.pacman1_score}')
@@ -131,7 +212,31 @@ class PacmanGame(GameApp):
     def on_key_pressed(self, event):
         ch = event.char.upper()
         if ch in self.command_map.keys():
+            self.game_started = True
             self.command_map[ch]()
+
+    def move_ghost(self, ghost, ways):
+        move = random.choice(ways)
+        if ghost.direction == DIR_DOWN and move == DIR_UP and DIR_DOWN in ways:
+            move = random.choice(ways+[DIR_DOWN]*20)
+        elif ghost.direction == DIR_UP and move == DIR_DOWN and DIR_UP in ways:
+            move = random.choice(ways+[DIR_UP]*20)
+        elif ghost.direction == DIR_LEFT and move == DIR_RIGHT and DIR_LEFT in ways:
+            move = random.choice(ways+[DIR_LEFT]*20)
+        elif ghost.direction == DIR_RIGHT and move == DIR_LEFT and DIR_RIGHT in ways:
+            move = random.choice(ways+[DIR_RIGHT]*20)
+        ghost.set_next_direction(move)
+    
+    def any_collision(self):
+        for player in self.elements:
+            if player.is_ghost:
+                continue
+            for ghost in self.elements:
+                if not ghost.is_ghost:
+                    continue
+                if player.x >= ghost.x-20 and player.x <= ghost.x+20 and player.y >= ghost.y-20 and player.y <= ghost.y+20:
+                    return player
+        return False
 
 
 class NormalPacmanState:
