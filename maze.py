@@ -5,21 +5,18 @@ import tkinter as tk
 class Dot(Sprite):
     def __init__(self, app, x, y, photo_image=None):
         super().__init__(app, 'images/dot.png', x, y, photo_image=photo_image)
-        
+        self.is_superdot = False
         self.is_eaten = False
 
     def get_eaten(self):
         self.is_eaten = True
         self.hide()
 
-class SuperDot(Sprite):
-    def __init__(self, app, x, y, photo_image=None):
-        super().__init__(app, '', x, y, photo_image=photo_image)
-        self.is_eaten = False
 
-    def super_get_eaten(self):
-        self.is_eaten = True
-        self.hide()
+class SuperDot(Dot):
+    def __init__(self, app, x, y, photo_image=None):
+        super().__init__(app, x, y, photo_image=photo_image)
+        self.is_superdot = True
         
 class Wall(Sprite):
     def __init__(self, app, x, y, photo_image=None):
@@ -69,6 +66,7 @@ class Maze:
 
         self.wall_image = tk.PhotoImage(file='images/wall.png')
         self.dot_image = tk.PhotoImage(file='images/dot.png')
+        self.superdot_image = tk.PhotoImage(file='images/superdot.png')
 
         for i in range(self.get_height()):
             for j in range(self.get_width()):
@@ -127,4 +125,22 @@ class Maze:
 
     def get_width(self):
         return len(Maze.MAP[0])
+    
+    def create_superdot(self, x, y):
+        x, y = self.piece_center(x, y)
+        r, c = self.xy_to_rc(x, y)
+        if self.has_wall_at(r, c):
+            # print("Has wall")
+            return
+        if self.has_dot_at(r, c):
+            self.eat_dot_at(r,c)
+            # print("Already has dot")
+        self.has_active_dots[(r,c)] = True
+        superdot = SuperDot(self.app, x, y, photo_image=self.superdot_image)
+        self.dots[(r,c)] = superdot
+        # print("Added at", r, c)
+    
+    def is_superdot(self, r, c):
+        return self.dots[(r,c)].is_superdot
+
 

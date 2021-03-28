@@ -37,6 +37,10 @@ class Pacman(Sprite):
             r, c = self.maze.xy_to_rc(self.x, self.y)
 
             if self.maze.has_dot_at(r, c):
+                if self.maze.is_superdot(r, c):
+                    for i in range(4):
+                        for i in self.dot_eaten_observers:
+                            i()
                 self.maze.eat_dot_at(r, c)
 
                 self.state.random_upgrade()
@@ -121,6 +125,7 @@ class Ghost(Sprite):
 class PacmanGame(GameApp):
     def init_game(self):
         self.game_started = False
+        self.superdot_started = False
         self.maze = Maze(self, CANVAS_WIDTH, CANVAS_HEIGHT)
 
         self.pacman1_image = tk.PhotoImage(file='images/pacman1.png')
@@ -192,6 +197,17 @@ class PacmanGame(GameApp):
         if True not in self.maze.has_active_dots.values():
             messagebox.showinfo("Alert", "Game Cleared!")
             self.new_game()
+        
+        if self.game_started and not self.superdot_started:
+            self.superdot_started = True
+            ms = random.randint(3000, 5000)
+            self.after(ms, lambda: self.add_superdot(ms))
+    
+    def add_superdot(self, ms):
+        self.maze.create_superdot(random.randint(1, self.maze.get_height() - 2), random.randint(1, self.maze.get_width() - 2))
+        add = self.after(ms, lambda: self.add_superdot(ms))
+        if not self.game_started:
+            self.after_cancel(add)
 
     def update_scores(self):
         self.pacman1_score_text.set_text(f'P1: {self.pacman1_score}')
